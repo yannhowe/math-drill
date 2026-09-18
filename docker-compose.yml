@@ -2,7 +2,7 @@ services:
   math-drill:
     build: .
     ports:
-      - "3000:3000"
+      - "${MATH_DRILL_PORT:-3000}:3000"
     environment:
       HOST: 0.0.0.0
       PORT: 3000
