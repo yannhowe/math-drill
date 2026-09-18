@@ -1,12 +1,7 @@
 node_modules/
 dist/
-coverage/
+data/
+apps/server/data/
 playwright-report/
 test-results/
 .env
-.env.*
-!.env.example
-data/*.db
-data/*.db-*
-data/*.sqlite
-data/*.sqlite-*
