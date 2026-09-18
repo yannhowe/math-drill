@@ -32,6 +32,9 @@ importers:
       '@fastify/static':
         specifier: ^8.3.0
         version: 8.3.0
+      '@math-drill/drill-engine':
+        specifier: workspace:*
+        version: link:../../packages/drill-engine
       fastify:
         specifier: ^5.7.0
         version: 5.12.5
