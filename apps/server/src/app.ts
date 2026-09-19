@@ -45,6 +45,9 @@ export function buildApp(store = new Store()) {
     const session=store.startSession(data.childId,data.mode,data.seed ?? Math.floor(Math.random()*2**31),data.targetQuestions);
     return reply.code(201).send({...session,...nextQuestion(store,data.childId,session.seed)});
   });
+  app.post("/api/v1/sessions/:sessionId/complete", async (request, reply) => {
+    const {sessionId}=z.object({sessionId:z.string().uuid()}).parse(request.params); store.completeSession(sessionId); return { completed: true };
+  });
   app.post("/api/v1/sessions/:sessionId/attempts", async (request, reply) => {
     const data=z.object({childId:z.string().uuid(),question:z.any(),response:z.string(),latencyMs:z.number().int().min(0).max(3_600_000),activityType:z.enum(["PRACTICE","DIAGNOSTIC","PLACEMENT","MASTERY_CHECK","REVIEW","TEST","PROBE"]),reason:z.string()}).parse(request.body);
     const score=scoreNumericResponse(data.question,{kind:"numeric",value:data.response});
