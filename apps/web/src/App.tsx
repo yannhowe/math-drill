@@ -29,7 +29,48 @@ export function App() {
   return <main className="entry"><section className="welcome"><p className="eyebrow">Math Drill</p><h1>Who is practising?</h1><div className="child-choices">{children.map(profile => <div className="child-choice" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: 14, background: "#e6f3ed", border: "1px solid #bcd8cb", borderRadius: 12 }} key={profile.id}><strong style={{ fontSize: "1.2rem", color: "#174c3f" }}>{profile.name}</strong><span style={{ display: "flex", gap: 6 }}><button style={{ minHeight: 38, padding: "7px 9px", fontSize: ".85rem" }} onClick={() => void chooseChild(profile, 120)}>2 min</button><button style={{ minHeight: 38, padding: "7px 9px", fontSize: ".85rem" }} onClick={() => void chooseChild(profile, 300)}>5 min</button></span></div>)}</div><button className="parent-entry" onClick={() => void openParent()}>Parent mode</button></section></main>;
 }
 
-/** A deliberately non-persistent preview used only for the public GitHub Pages site. */
+type DemoQuestion = { equation: string; answer: string; skill: string; reason: string };
+const demoQuestions: DemoQuestion[] = [
+  { equation: "7 × 8 = ?", answer: "56", skill: "7–9 multiplication", reason: "Placement check · no recent evidence" },
+  { equation: "? × 6 = 42", answer: "7", skill: "Missing factors", reason: "Transfer check · related to the last fact" },
+  { equation: "63 ÷ 9 = ?", answer: "7", skill: "Division facts", reason: "Inverse fact · strengthens retrieval paths" },
+  { equation: "48 ÷ ? = 6", answer: "8", skill: "Missing divisors", reason: "Short review · this form was slower last time" },
+  { equation: "9 × 7 = ?", answer: "63", skill: "7–9 multiplication", reason: "Retention check · spaced revisit" },
+];
+
+/** A deliberately synthetic, non-persistent preview used only for the public GitHub Pages site. */
 export function StaticDemo() {
-  return <main className="entry"><section className="welcome"><p className="eyebrow">Math Drill · static preview</p><h1>Adaptive fluency practice</h1><p>This public preview shows the child-first interface. The full app runs locally with SQLite, parent access, persistence, and adaptive scheduling.</p><div style={{ margin: "28px 0", padding: 22, borderRadius: 14, background: "#eef6f1", fontSize: "2rem", fontWeight: 800 }}>7 × 8 = ?</div><p style={{ fontSize: ".9rem", color: "#577065" }}>Run the complete private version with Docker Compose, or visit its Tailscale deployment.</p><a className="parent-entry" href="https://github.com/yannhowe/math-drill">View source on GitHub</a></section></main>;
+  const [index, setIndex] = useState(0);
+  const [answer, setAnswer] = useState("");
+  const [attempts, setAttempts] = useState<Array<{ correct: boolean; question: DemoQuestion }>>([]);
+  const [feedback, setFeedback] = useState<"correct" | "wrong" | "">("");
+  const [view, setView] = useState<"practice" | "parent">("practice");
+  const finished = index >= demoQuestions.length;
+  const current = demoQuestions[Math.min(index, demoQuestions.length - 1)];
+  const correct = attempts.filter(item => item.correct).length;
+
+  function submitDemo(event: FormEvent) {
+    event.preventDefault();
+    if (!answer.trim() || finished || feedback) return;
+    const isCorrect = answer.trim() === current.answer;
+    setAttempts(items => [...items, { correct: isCorrect, question: current }]);
+    setFeedback(isCorrect ? "correct" : "wrong");
+    window.setTimeout(() => {
+      setFeedback("");
+      setAnswer("");
+      setIndex(value => value + 1);
+    }, 650);
+  }
+
+  function resetDemo() {
+    setIndex(0);
+    setAnswer("");
+    setAttempts([]);
+    setFeedback("");
+    setView("practice");
+  }
+
+  if (view === "parent") return <main className="demo-shell"><header className="demo-topbar"><div><p className="eyebrow">Math Drill · public demo</p><h1>Practice evidence</h1></div><button onClick={() => setView("practice")}>Back to practice</button></header><section className="demo-report"><div className="demo-metrics"><article><span>Attempts</span><strong>{attempts.length}</strong></article><article><span>Accuracy</span><strong>{attempts.length ? Math.round(correct / attempts.length * 100) : 0}%</strong></article><article><span>Current focus</span><strong>Facts to 81</strong></article></div><div className="demo-evidence"><div><p className="eyebrow">Explainable selection</p><h2>Why each question appeared</h2>{attempts.length ? <ol>{attempts.map((item, itemIndex) => <li key={itemIndex}><b>{item.correct ? "✓" : "×"}</b><span><strong>{item.question.equation}</strong><small>{item.question.reason}</small></span></li>)}</ol> : <p className="demo-empty">Answer a few questions to build a synthetic evidence trail.</p>}</div><aside><p className="eyebrow">Demo boundaries</p><h2>Safe by design</h2><p>This public version uses a fixed synthetic learner and keeps every answer in this browser tab only.</p><p>The complete local app adds separate child profiles, immutable attempts, SQLite persistence and parent PIN access.</p><a href="https://github.com/yannhowe/math-drill">View source on GitHub</a></aside></div></section></main>;
+
+  return <main className={`demo-practice ${feedback}`}><header className="demo-practice-head"><div><p className="eyebrow">Math Drill · public demo</p><strong>Demo learner</strong></div><button onClick={() => setView("parent")}>Parent view</button></header>{finished ? <section className="demo-finish"><p className="eyebrow">Session complete</p><h1>Five useful checks, done.</h1><p><strong>{correct} of {attempts.length}</strong> correct. The sequence mixed placement, transfer and retention checks so every question had a reason.</p><div><button onClick={() => setView("parent")}>See the evidence</button><button className="secondary" onClick={resetDemo}>Try again</button></div></section> : <section className="demo-question"><div className="demo-progress" aria-label={`Question ${index + 1} of ${demoQuestions.length}`}><i style={{ width: `${index / demoQuestions.length * 100}%` }} /></div><p className="demo-reason">{current.reason}</p><h1>{current.equation}</h1><form onSubmit={submitDemo}><label className="sr-only" htmlFor="demo-answer">Answer</label><input id="demo-answer" autoFocus inputMode="numeric" value={answer} onChange={event => setAnswer(event.target.value)} /><button aria-label="Check answer">Check</button></form><p className="demo-skill">Practising · {current.skill}</p></section>}<div className="answer-flash" aria-live="polite">{feedback === "correct" ? "✓" : feedback === "wrong" ? "×" : ""}</div></main>;
 }
